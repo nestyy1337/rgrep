@@ -144,58 +144,9 @@ impl Args {
         let mut line_buffer: Vec<(usize, String)> = Vec::new();
         let context = self.context;
 
-        for (line_num, line_result) in reader.lines().enumerate() {
-            match line_result {
-                Ok(line) => line_buffer.push((line_num, line)),
-                Err(e) => {
-                    eprintln!("Failed to read from buf: {}", e);
-                    continue;
-                }
-            }
-        }
-
-        let mut i = 0;
-        while i < line_buffer.len() {
-            let (num, line) = &line_buffer[i];
-
-            if compiled_nfa.matches(line) {
-                matched = true;
-
-                let start = if *num >= context { num - context } else { 0 };
-                let end = std::cmp::min(line_buffer.len(), num + context + 1);
-
-                for j in start..end {
-                    let (ctx_num, ctx_line) = &line_buffer[j];
-
-                    let prefix = if *ctx_num == *num { ">" } else { " " };
-
-                    if self.line_num {
-                        println!("{} #{}: {}", prefix, ctx_num, ctx_line);
-                    } else {
-                        println!("{} {}", prefix, ctx_line);
-                    }
-                }
-
-                i = end;
-
-                if i < line_buffer.len() {
-                    println!("--");
-                }
-
-                continue;
-            }
-
-            i += 1;
-        }
-
-        matched
-    }
-
-    fn process_input_parallel<R: std::io::BufRead>(&self, compiled_nfa: NFA, reader: R) -> bool {
-        let mut matched = false;
-        let mut line_buffer: Vec<(usize, String)> = Vec::new();
-        let context = self.context;
-
+        // its fucked, its like we need a queue of buffered lines if context is set
+        // or we dont bother and we directly read specified lines without buffering
+        // if we find a match
         for (line_num, line_result) in reader.lines().enumerate() {
             match line_result {
                 Ok(line) => line_buffer.push((line_num, line)),
